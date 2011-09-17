@@ -73,6 +73,7 @@ DWORD WINAPI cncnet_connect(int ctx)
 
     CenterWindow(hwnd_status);
     ShowWindow(hwnd_status, SW_SHOW);
+    SetForegroundWindow(hwnd_status);
 
     config_load();
 
@@ -98,6 +99,7 @@ DWORD WINAPI cncnet_connect(int ctx)
             CenterWindow(hwnd_settings);
             ShowWindow(hwnd_status, SW_HIDE);
             ShowWindow(hwnd_settings, SW_SHOW);
+            SetForegroundWindow(hwnd_settings);
             return 0;
         }
     }
@@ -128,6 +130,7 @@ DWORD WINAPI cncnet_connect(int ctx)
             SetWindowText(itm_status, "Logging out...");
             CenterWindow(hwnd_status);
             ShowWindow(hwnd_status, SW_SHOW);
+            SetForegroundWindow(hwnd_status);
 
             http_download_mem(cncnet_build_request(cfg_url, "logout", game, cfg_port), response, sizeof(response));
             PostMessage(hwnd_status, WM_COMMAND, 0, 0);
@@ -149,9 +152,14 @@ DWORD WINAPI cncnet_connect(int ctx)
     return 0;
 }
 
-INT_PTR CALLBACK StatusProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (uMsg == WM_COMMAND && lParam == 0)
+    if (uMsg == WM_INITDIALOG)
+    {
+        return TRUE;
+    }
+
+    if (uMsg == WM_COMMAND && (lParam == 0 || lParam == (LPARAM)itm_cancel))
     {
         PostQuitMessage(0);
     }
@@ -161,16 +169,6 @@ INT_PTR CALLBACK StatusProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         SetEvent(open_settings);
     } 
 
-    return 0;
-}
-
-INT_PTR CALLBACK SettingsProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    if (uMsg == WM_COMMAND && (lParam == 0 || lParam == (LPARAM)itm_cancel))
-    {
-        PostQuitMessage(0);
-    }
-
     if (uMsg == WM_COMMAND && lParam == (LPARAM)itm_ok)
     {
         ShowWindow(hwnd, SW_HIDE);
@@ -178,7 +176,7 @@ INT_PTR CALLBACK SettingsProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
         CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cncnet_connect, 0, 0, NULL);
     }
 
-    return 0;
+    return FALSE;
 }
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -189,8 +187,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     HANDLE find;
     BOOL ret;
     MSG msg;
-    hwnd_status = CreateDialog(NULL, MAKEINTRESOURCE(DLG_STATUS), NULL, StatusProc);
-    hwnd_settings = CreateDialog(NULL, MAKEINTRESOURCE(DLG_SETTINGS), NULL, SettingsProc);
+    hwnd_status = CreateDialog(NULL, MAKEINTRESOURCE(DLG_STATUS), NULL, DialogProc);
+    hwnd_settings = CreateDialog(NULL, MAKEINTRESOURCE(DLG_SETTINGS), NULL, DialogProc);
     itm_settings = GetDlgItem(hwnd_status, ITM_SETTINGS);
     itm_url = GetDlgItem(hwnd_settings, ITM_URL);
     itm_exe = GetDlgItem(hwnd_settings, ITM_EXE);
