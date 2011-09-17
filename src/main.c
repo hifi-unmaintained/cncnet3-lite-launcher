@@ -205,6 +205,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     SendMessage(hwnd_settings, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIcon(hInstance, "small"));
     SendMessage(hwnd_settings, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(hInstance, "large"));
 
+    /* set initial focus */
+    SendMessage(hwnd_status, WM_NEXTDLGCTL, (WPARAM)itm_settings, TRUE);
+    SendMessage(hwnd_settings, WM_NEXTDLGCTL, (WPARAM)itm_ok, TRUE);
+
     /* fix working directory */
     GetModuleFileName(NULL, path, MAX_PATH);
     dir = GetDirectory(path);
