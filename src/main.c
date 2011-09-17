@@ -74,6 +74,8 @@ DWORD WINAPI cncnet_connect(int ctx)
     CenterWindow(hwnd_status);
     ShowWindow(hwnd_status, SW_SHOW);
 
+    config_load();
+
     /* give time to open settings */
     if (WaitForSingleObject(open_settings, 0) != WAIT_OBJECT_0)
     {
@@ -95,7 +97,6 @@ DWORD WINAPI cncnet_connect(int ctx)
         {
             CenterWindow(hwnd_settings);
             ShowWindow(hwnd_status, SW_HIDE);
-            config_load();
             ShowWindow(hwnd_settings, SW_SHOW);
             return 0;
         }
