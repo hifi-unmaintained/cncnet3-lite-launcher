@@ -1,0 +1,71 @@
+/*
+ * Copyright (c) 2011 Toni Spets <toni.spets@iki.fi>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <windows.h>
+#include <afxres.h>
+
+#include "res/dialog.h"
+
+DLG_STATUS DIALOGEX 0, 0, 211, 28
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "CnCNet"
+FONT 8, "MS Shell Dlg 2"
+{
+    CONTROL "Connecting to CnCNet in 3 seconds...", ITM_STATUS, "STATIC", SS_CENTERIMAGE, 7, 7, 140, 14
+    PUSHBUTTON "&Settings", ITM_SETTINGS, 154, 7, 50, 14
+}
+
+DLG_SETTINGS DIALOGEX 0, 0, 170, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "CnCNet - Settings"
+FONT 8, "MS Shell Dlg 2"
+{
+    CONTROL "CnCNet API URL:", IDC_STATIC, "STATIC", 0, 7, 7, 156, 8
+    EDITTEXT ITM_URL, 7, 18, 156, 12
+    CONTROL "Game executable:", IDC_STATIC, "STATIC", 0, 7, 34, 90, 8
+    COMBOBOX ITM_EXE, 7, 45, 100, 14, CBS_DROPDOWN
+    CONTROL "External port:", IDC_STATIC, "STATIC", 0, 114, 34, 49, 8
+    EDITTEXT ITM_PORT, 114, 45, 49, 12
+    CONTROL "", IDC_STATIC, "STATIC", SS_ETCHEDFRAME, 7, 66, 156, 1
+    PUSHBUTTON "&OK", ITM_OK, 7, 74, 50, 14
+    PUSHBUTTON "&Cancel", ITM_CANCEL, 113, 74, 50, 14
+}
+
+1 VERSIONINFO
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904B0"
+        {
+            VALUE "CompanyName", "Toni Spets"
+            VALUE "FileVersion", "git~__REV__"
+            VALUE "InternalName", "cncnet-lite-launcher"
+            VALUE "LegalCopyright", "Copyright (c) 2011 Toni Spets"
+            VALUE "OriginalFileName", "cncnet.exe"
+        }
+    }
+
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation",  0x0409, 0x04B0
+    }
+}
+
+small   ICON "res/cncnet-16x16.ico"
+medium  ICON "res/cncnet-32x32.ico"
+large   ICON "res/cncnet-48x48.ico"
+
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "res/cncnet.exe.manifest"
