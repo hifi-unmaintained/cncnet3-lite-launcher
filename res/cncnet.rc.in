@@ -55,6 +55,7 @@ FONT 8, "MS Shell Dlg 2"
             VALUE "InternalName", "cncnet-lite-launcher"
             VALUE "LegalCopyright", "Copyright (c) 2011 Toni Spets"
             VALUE "OriginalFileName", "cncnet.exe"
+            VALUE "FileDescription", "Connects to CnCNet"
         }
     }
 
