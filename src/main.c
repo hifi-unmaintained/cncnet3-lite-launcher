@@ -239,12 +239,12 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
     else if (FileExists("SUN.EXE"))
     {
-        exe = "GAME.EXE";
+        exe = "SUN.EXE";
         game = "ts";
     }
     else if (FileExists("RA2.EXE"))
     {
-        exe = "GAME.EXE";
+        exe = "RA2.EXE";
         game = "ra2";
     }
 
