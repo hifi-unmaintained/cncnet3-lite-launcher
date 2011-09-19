@@ -235,7 +235,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     else if (FileExists("DTA.DAT"))
     {
         exe = "DTA.DAT";
-        game = "ts"; /* give them their own protocol? */
+        game = "tsdta";
     }
     else if (FileExists("SUN.EXE"))
     {
