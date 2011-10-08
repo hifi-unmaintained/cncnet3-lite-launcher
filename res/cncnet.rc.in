@@ -37,10 +37,10 @@ STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POP
 CAPTION "CnCNet - Settings"
 FONT 8, "Ms Shell Dlg"
 {
-    AUTORADIOBUTTON "Connect to CnCNet dedicated server (recommended)", IDC_DEDICATED, 17, 21, 183, 8, WS_TABSTOP
+    AUTORADIOBUTTON "Dedicated server (recommended)", IDC_DEDICATED, 17, 21, 183, 8, WS_TABSTOP
     EDITTEXT        IDC_HOST, 32, 42, 115, 12, ES_AUTOHSCROLL
     EDITTEXT        IDC_PORT, 152, 42, 45, 12, ES_AUTOHSCROLL
-    AUTORADIOBUTTON "Use peer-to-peer API", IDC_P2P, 17, 61, 82, 8, WS_TABSTOP
+    AUTORADIOBUTTON "3.0 peer-to-peer API", IDC_P2P, 17, 61, 95, 8, WS_TABSTOP
     EDITTEXT        IDC_APIURL, 32, 82, 115, 12, ES_AUTOHSCROLL
     EDITTEXT        IDC_EXTPORT, 152, 82, 45, 12, ES_AUTOHSCROLL
     AUTORADIOBUTTON "Direct ip peer-to-peer", IDC_DIRECT, 17, 101, 82, 8, WS_TABSTOP
@@ -55,8 +55,8 @@ FONT 8, "Ms Shell Dlg"
     LTEXT           "Port", IDC_STATIC, 152, 32, 14, 8, SS_LEFT
     LTEXT           "API URL", IDC_STATIC, 32, 72, 29, 8, SS_LEFT
     LTEXT           "External port", IDC_STATIC, 152, 72, 40, 8, SS_LEFT
-    LTEXT           "Opponent IP address", IDC_STATIC, 32, 112, 68, 8, SS_LEFT
-    LTEXT           "Opponent port", IDC_STATIC, 152, 112, 46, 8, SS_LEFT
+    LTEXT           "Opponent host", IDC_STATIC, 32, 112, 68, 8, SS_LEFT
+    LTEXT           "Port", IDC_STATIC, 152, 112, 46, 8, SS_LEFT
     GROUPBOX        "Game settings", IDC_STATIC, 7, 145, 196, 43
     LTEXT           "Executable", IDC_STATIC, 18, 158, 36, 8, SS_LEFT
     LTEXT           "Command line arguments", IDC_STATIC, 82, 159, 80, 8, SS_LEFT
