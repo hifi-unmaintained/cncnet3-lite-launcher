@@ -16,44 +16,119 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include "../res/resource.h"
 
-char cfg_url[512] = "http://cncnet.cnc-comm.com/api/";
+char cfg_connection[32] = "dedicated";
+char cfg_host[512] = "lobby.cncnet.cnc-comm.com";
+int cfg_port = 9000;
+char cfg_apiurl[512] = "http://cncnet.cnc-comm.com/api/";
+int cfg_extport = 8054;
+char cfg_opip[512] = "";
+int cfg_opport = 8054;
 char cfg_exe[32] = { 0 };
-int cfg_port = 8054;
+char cfg_args[512] = "-LAN";
 
 extern char *game;
 
-extern HWND itm_url;
-extern HWND itm_exe;
+extern HWND itm_settings;
+extern HWND itm_dedicated;
+extern HWND itm_host;
 extern HWND itm_port;
+extern HWND itm_p2p;
+extern HWND itm_url;
+extern HWND itm_extport;
+extern HWND itm_direct;
+extern HWND itm_opip;
+extern HWND itm_opport;
+extern HWND itm_exe;
+extern HWND itm_args;
 
+#define SECTION "CnCNet3"
 #define CONFIG ".\\cncnet.ini"
 
 void config_load()
 {
     char buf[512];
 
-    GetPrivateProfileString("CnCNet", "Url", cfg_url, cfg_url, sizeof(cfg_url), CONFIG);
-    GetPrivateProfileString("CnCNet", "Exe", cfg_exe, cfg_exe, sizeof(cfg_exe), CONFIG);
-    cfg_port = GetPrivateProfileInt("CnCNet", "Port", cfg_port, CONFIG);
+    GetPrivateProfileString(SECTION, "Connection", cfg_connection, cfg_connection, sizeof(cfg_connection), CONFIG);
+    GetPrivateProfileString(SECTION, "Host", cfg_host, cfg_host, sizeof(cfg_host), CONFIG);
+    cfg_port = GetPrivateProfileInt(SECTION, "Port", cfg_port, CONFIG);
+    GetPrivateProfileString(SECTION, "ApiURL", cfg_apiurl, cfg_apiurl, sizeof(cfg_apiurl), CONFIG);
+    cfg_extport = GetPrivateProfileInt(SECTION, "ExtPort", cfg_extport, CONFIG);
+    GetPrivateProfileString(SECTION, "Executable", cfg_exe, cfg_exe, sizeof(cfg_exe), CONFIG);
+    GetPrivateProfileString(SECTION, "OpponentHost", cfg_opip, cfg_opip, sizeof(cfg_opip), CONFIG);
+    cfg_opport = GetPrivateProfileInt(SECTION, "OpponentPort", cfg_opport, CONFIG);
+    GetPrivateProfileString(SECTION, "Arguments", cfg_args, cfg_args, sizeof(cfg_args), CONFIG);
 
-    SetWindowText(itm_url, cfg_url);
-    SetWindowText(itm_exe, cfg_exe);
+    if (stricmp(cfg_connection, "direct") == 0)
+    {
+        PostMessage(itm_direct, BM_SETCHECK, BST_CHECKED, 0);
+    }
+    else if (stricmp(cfg_connection, "p2p") == 0)
+    {
+        PostMessage(itm_p2p, BM_SETCHECK, BST_CHECKED, 0);
+    }
+    else
+    {
+        PostMessage(itm_dedicated, BM_SETCHECK, BST_CHECKED, 0);
+    }
+
+    SetWindowText(itm_host, cfg_host);
     sprintf(buf, "%d", cfg_port);
     SetWindowText(itm_port, buf); 
+    SetWindowText(itm_url, cfg_apiurl);
+    SetWindowText(itm_opip, cfg_opip);
+    sprintf(buf, "%d", cfg_opport);
+    SetWindowText(itm_opport, buf); 
+    SetWindowText(itm_exe, cfg_exe);
+    sprintf(buf, "%d", cfg_extport);
+    SetWindowText(itm_extport, buf); 
+    SetWindowText(itm_args, cfg_args); 
 }
 
 void config_save()
 {
     char buf[512];
 
-    GetWindowText(itm_url, cfg_url, sizeof(cfg_url));
-    GetWindowText(itm_exe, cfg_exe, sizeof(cfg_exe));
+    if (SendMessage(itm_direct, BM_GETCHECK, 0, 0) == BST_CHECKED)
+    {
+        strcpy(cfg_connection, "direct");
+    } 
+    else if (SendMessage(itm_p2p, BM_GETCHECK, 0, 0) == BST_CHECKED)
+    {
+        strcpy(cfg_connection, "p2p");
+    }
+    else
+    {
+        strcpy(cfg_connection, "dedicated");
+    }
+
+    WritePrivateProfileString(SECTION, "Connection", cfg_connection, CONFIG);
+
+    GetWindowText(itm_host, cfg_host, sizeof(cfg_host));
+    WritePrivateProfileString(SECTION, "Host", cfg_host, CONFIG);
+
     GetWindowText(itm_port, buf, sizeof(buf));
-
-    WritePrivateProfileString("CnCNet", "Url", cfg_url, CONFIG);
-    WritePrivateProfileString("CnCNet", "Exe", cfg_exe, CONFIG);
-    WritePrivateProfileString("CnCNet", "Port", buf, CONFIG);
-
+    WritePrivateProfileString(SECTION, "Port", buf, CONFIG);
     cfg_port = atoi(buf);
+
+    GetWindowText(itm_url, cfg_apiurl, sizeof(cfg_apiurl));
+    WritePrivateProfileString(SECTION, "ApiUrl", cfg_apiurl, CONFIG);
+
+    GetWindowText(itm_extport, buf, sizeof(buf));
+    WritePrivateProfileString(SECTION, "ExtPort", buf, CONFIG);
+    cfg_extport = atoi(buf);
+
+    GetWindowText(itm_opip, cfg_host, sizeof(cfg_host));
+    WritePrivateProfileString(SECTION, "OpponentHost", cfg_host, CONFIG);
+
+    GetWindowText(itm_opport, buf, sizeof(buf));
+    WritePrivateProfileString(SECTION, "OpponentPort", buf, CONFIG);
+    cfg_opport = atoi(buf);
+
+    GetWindowText(itm_exe, cfg_exe, sizeof(cfg_exe));
+    WritePrivateProfileString(SECTION, "Executable", cfg_exe, CONFIG);
+
+    GetWindowText(itm_args, cfg_args, sizeof(cfg_args));
+    WritePrivateProfileString(SECTION, "Arguments", cfg_args, CONFIG);
 }

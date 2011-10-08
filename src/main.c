@@ -16,10 +16,12 @@
 
 #include <windows.h>
 #include <stdio.h>
-#include "../res/dialog.h"
+#include "../res/resource.h"
 #include "http.h"
 #include "register.h"
+#include "base32.h"
 #include <commctrl.h>
+#include <winsock2.h>
 
 HWND hwnd_status;
 HWND hwnd_settings;
@@ -28,9 +30,17 @@ HWND itm_ok;
 HWND itm_cancel;
 HANDLE open_settings;
 
-HWND itm_url;
-HWND itm_exe;
+HWND itm_dedicated;
+HWND itm_host;
 HWND itm_port;
+HWND itm_p2p;
+HWND itm_url;
+HWND itm_extport;
+HWND itm_direct;
+HWND itm_opip;
+HWND itm_opport;
+HWND itm_exe;
+HWND itm_args;
 
 void config_load();
 void config_save();
@@ -38,9 +48,15 @@ void config_save();
 /* guessed from game directory */
 char *game = NULL;
 
-extern char cfg_url[512];
-extern char cfg_exe[32];
+extern char cfg_connection[32];
+extern char cfg_host[512];
 extern int cfg_port;
+extern char cfg_apiurl[512];
+extern int cfg_extport;
+extern char cfg_opip[512];
+extern int cfg_opport;
+extern char cfg_exe[32];
+extern char cfg_args[512];
 
 bool cncnet_parse_response(char *response, char *url, int *interval)
 {
@@ -54,16 +70,9 @@ char *cncnet_build_request(const char *path, const char *method, const char *gam
     return request;
 }
 
-void CenterWindow(HWND hWnd)
-{
-    RECT rc;
-    GetWindowRect(hWnd, &rc);
-    SetWindowPos(hWnd, NULL, GetSystemMetrics(SM_CXSCREEN) / 2 - (rc.right - rc.left) / 2, GetSystemMetrics(SM_CYSCREEN) / 2 - (rc.bottom - rc.top) / 2, rc.right - rc.left, rc.bottom - rc.top, 0);
-}
-
 DWORD WINAPI cncnet_connect(int ctx)
 {
-    HWND itm_status = GetDlgItem(hwnd_status, ITM_STATUS);
+    HWND itm_status = GetDlgItem(hwnd_status, IDC_STATUS);
     int i;
     char response[512] = { 0 };
     PROCESS_INFORMATION pInfo;
@@ -71,7 +80,6 @@ DWORD WINAPI cncnet_connect(int ctx)
     char url[512];
     int interval = 0;
 
-    CenterWindow(hwnd_status);
     ShowWindow(hwnd_status, SW_SHOW);
     SetForegroundWindow(hwnd_status);
 
@@ -96,7 +104,6 @@ DWORD WINAPI cncnet_connect(int ctx)
 
         if (WaitForSingleObject(open_settings, 0) == WAIT_OBJECT_0)
         {
-            CenterWindow(hwnd_settings);
             ShowWindow(hwnd_status, SW_HIDE);
             ShowWindow(hwnd_settings, SW_SHOW);
             SetForegroundWindow(hwnd_settings);
@@ -106,48 +113,103 @@ DWORD WINAPI cncnet_connect(int ctx)
 
     SetWindowText(itm_status, "Connecting to CnCNet...");
 
-    http_init();
+    /* launch gaem */
+    ZeroMemory(&sInfo, sizeof(STARTUPINFO));
+    sInfo.cb = sizeof(sInfo);
+    ZeroMemory(&pInfo, sizeof(PROCESS_INFORMATION));
 
-    if (http_download_mem(cncnet_build_request(cfg_url, "launch", game, cfg_port), response, sizeof(response)) && cncnet_parse_response(response, url, &interval) && url != NULL && interval > 0)
+    if (strcmp(cfg_connection, "direct") == 0)
     {
-        SetWindowText(itm_status, "Connected! Launching game...");
-
-        /* launch gaem */
-        ZeroMemory(&sInfo, sizeof(STARTUPINFO));
-        sInfo.cb = sizeof(sInfo);
-        ZeroMemory(&pInfo, sizeof(PROCESS_INFORMATION));
-
-        snprintf(response, sizeof(response), "%s -LAN %s", cfg_exe, url);
-        if (CreateProcess(NULL, response, NULL, NULL, TRUE, 0, NULL, NULL, &sInfo, &pInfo) != 0)
+        char raw[6];
+        char enc[32];
+        struct hostent *hent;
+        WSADATA wsaData;
+        WSAStartup(0x0101, &wsaData);
+        hent = gethostbyname(cfg_opip);
+        if (!hent)
         {
-            ShowWindow(hwnd_status, SW_HIDE);
+            SetWindowText(itm_status, "Opponent address is invalid.");
+        }
+        else 
+        {
+            *(int *)raw = *(int *)hent->h_addr_list[0];
+            *(short *)(raw+4) = htons(cfg_opport);
 
-            while (WaitForSingleObject(pInfo.hProcess, interval * 60 * 1000) != WAIT_OBJECT_0)
-            {
-                http_download_mem(cncnet_build_request(cfg_url, "ping", game, cfg_port), response, sizeof(response));
+            if (base32_encode((uint8_t *)raw, 6, (uint8_t *)enc, sizeof(enc)) == 0) {
+                SetWindowText(itm_status, "Base32 failed :-(");
+                return 0;
             }
 
-            SetWindowText(itm_status, "Logging out...");
-            CenterWindow(hwnd_status);
-            ShowWindow(hwnd_status, SW_SHOW);
-            SetForegroundWindow(hwnd_status);
+            snprintf(response, sizeof(response), "%s:v4=%s", game, enc);
+            SetEnvironmentVariable("CNCNET_URL", response);
+            snprintf(response, sizeof(response), "%s %s", cfg_exe, cfg_args);
+            if (CreateProcess(NULL, response, NULL, NULL, TRUE, 0, NULL, NULL, &sInfo, &pInfo) != 0)
+            {
+                exit(0);
+            }
+            else
+            {
+                snprintf(response, sizeof(response), "Failed to launch %s", cfg_exe);
+                SetWindowText(itm_status, response);
+            }
+        }
+    }
+    else if (strcmp(cfg_connection, "p2p") == 0)
+    {
+        http_init();
 
-            http_download_mem(cncnet_build_request(cfg_url, "logout", game, cfg_port), response, sizeof(response));
-            PostMessage(hwnd_status, WM_COMMAND, 0, 0);
+        if (http_download_mem(cncnet_build_request(cfg_apiurl, "launch", game, cfg_extport), response, sizeof(response)) && cncnet_parse_response(response, url, &interval) && url != NULL && interval > 0)
+        {
+            SetWindowText(itm_status, "Connected! Launching game...");
+
+            SetEnvironmentVariable("CNCNET_URL", url);
+            snprintf(response, sizeof(response), "%s %s", cfg_exe, cfg_args);
+            if (CreateProcess(NULL, response, NULL, NULL, TRUE, 0, NULL, NULL, &sInfo, &pInfo) != 0)
+            {
+                ShowWindow(hwnd_status, SW_HIDE);
+
+                while (WaitForSingleObject(pInfo.hProcess, interval * 60 * 1000) != WAIT_OBJECT_0)
+                {
+                    http_download_mem(cncnet_build_request(cfg_apiurl, "ping", game, cfg_extport), response, sizeof(response));
+                }
+
+                SetWindowText(itm_status, "Logging out...");
+                ShowWindow(hwnd_status, SW_SHOW);
+                SetForegroundWindow(hwnd_status);
+
+                http_download_mem(cncnet_build_request(cfg_apiurl, "logout", game, cfg_extport), response, sizeof(response));
+                exit(0);
+            }
+            else
+            {
+                snprintf(response, sizeof(response), "Failed to launch %s", cfg_exe);
+                SetWindowText(itm_status, response);
+                http_download_mem(cncnet_build_request(cfg_apiurl, "logout", game, cfg_extport), response, sizeof(response));
+            }
+        }
+        else
+        {
+            SetWindowText(itm_status, "Error connecting to CnCNet :-(");
+        }
+
+        http_release();
+    }
+    else
+    {
+        /* dedicated */
+        snprintf(response, sizeof(response), "%s:v4serv=%s:%d", game, cfg_host, cfg_port);
+        SetEnvironmentVariable("CNCNET_URL", response);
+        snprintf(response, sizeof(response), "%s %s", cfg_exe, cfg_args);
+        if (CreateProcess(NULL, response, NULL, NULL, TRUE, 0, NULL, NULL, &sInfo, &pInfo) != 0)
+        {
+            exit(0);
         }
         else
         {
             snprintf(response, sizeof(response), "Failed to launch %s", cfg_exe);
             SetWindowText(itm_status, response);
-            http_download_mem(cncnet_build_request(cfg_url, "logout", game, cfg_port), response, sizeof(response));
         }
     }
-    else
-    {
-        SetWindowText(itm_status, "Error connecting to CnCNet :-(");
-    }
-
-    http_release();
 
     return 0;
 }
@@ -187,14 +249,22 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     HANDLE find;
     BOOL ret;
     MSG msg;
-    hwnd_status = CreateDialog(NULL, MAKEINTRESOURCE(DLG_STATUS), NULL, DialogProc);
-    hwnd_settings = CreateDialog(NULL, MAKEINTRESOURCE(DLG_SETTINGS), NULL, DialogProc);
-    itm_settings = GetDlgItem(hwnd_status, ITM_SETTINGS);
-    itm_url = GetDlgItem(hwnd_settings, ITM_URL);
-    itm_exe = GetDlgItem(hwnd_settings, ITM_EXE);
-    itm_port = GetDlgItem(hwnd_settings, ITM_PORT);
-    itm_ok = GetDlgItem(hwnd_settings, ITM_OK);
-    itm_cancel = GetDlgItem(hwnd_settings, ITM_CANCEL);
+    hwnd_status = CreateDialog(NULL, MAKEINTRESOURCE(IDD_CONNECTING), NULL, DialogProc);
+    hwnd_settings = CreateDialog(NULL, MAKEINTRESOURCE(IDD_SETTINGS), NULL, DialogProc);
+    itm_settings = GetDlgItem(hwnd_status, IDC_SETTINGS);
+    itm_dedicated = GetDlgItem(hwnd_settings, IDC_DEDICATED);
+    itm_host = GetDlgItem(hwnd_settings, IDC_HOST);
+    itm_port = GetDlgItem(hwnd_settings, IDC_PORT);
+    itm_p2p = GetDlgItem(hwnd_settings, IDC_P2P);
+    itm_url = GetDlgItem(hwnd_settings, IDC_APIURL);
+    itm_extport = GetDlgItem(hwnd_settings, IDC_EXTPORT);
+    itm_direct = GetDlgItem(hwnd_settings, IDC_DIRECT);
+    itm_opip = GetDlgItem(hwnd_settings, IDC_OPIP);
+    itm_opport = GetDlgItem(hwnd_settings, IDC_OPPORT);
+    itm_exe = GetDlgItem(hwnd_settings, IDC_EXECUTABLE);
+    itm_args = GetDlgItem(hwnd_settings, IDC_ARGUMENTS);
+    itm_ok = GetDlgItem(hwnd_settings, IDOK);
+    itm_cancel = GetDlgItem(hwnd_settings, IDCANCEL);
 
     open_settings = CreateEvent(NULL, TRUE, FALSE, NULL);
 
