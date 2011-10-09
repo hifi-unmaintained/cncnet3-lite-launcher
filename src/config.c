@@ -25,7 +25,7 @@ char cfg_apiurl[512] = "http://cncnet.cnc-comm.com/api/";
 int cfg_extport = 8054;
 char cfg_opip[512] = "";
 int cfg_opport = 8054;
-char cfg_exe[32] = { 0 };
+char cfg_exe[64] = { 0 };
 char cfg_args[512] = "-LAN";
 
 extern char *game;

@@ -55,7 +55,7 @@ extern char cfg_apiurl[512];
 extern int cfg_extport;
 extern char cfg_opip[512];
 extern int cfg_opport;
-extern char cfg_exe[32];
+extern char cfg_exe[64];
 extern char cfg_args[512];
 
 bool cncnet_parse_response(char *response, char *url, int *interval)
