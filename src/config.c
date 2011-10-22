@@ -19,7 +19,7 @@
 #include "../res/resource.h"
 
 char cfg_connection[32] = "dedicated";
-char cfg_host[512] = "lobby.cncnet.cnc-comm.com";
+char cfg_host[512] = "open.cncnet.org";
 int cfg_port = 9000;
 char cfg_apiurl[512] = "http://cncnet.cnc-comm.com/api/";
 int cfg_extport = 8054;
