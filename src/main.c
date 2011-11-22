@@ -58,6 +58,7 @@ extern char cfg_opip[512];
 extern int cfg_opport;
 extern char cfg_exe[64];
 extern char cfg_args[512];
+extern int cfg_timeout;
 
 bool cncnet_parse_response(char *response, char *url, int *interval)
 {
@@ -87,7 +88,7 @@ DWORD WINAPI cncnet_connect(int ctx)
     /* give time to open settings */
     if (WaitForSingleObject(open_settings, 0) != WAIT_OBJECT_0)
     {
-        for (i = 3; i > 0; i--)
+        for (i = cfg_timeout; i > 0; i--)
         {
             char buf[128];
             sprintf(buf, "Connecting to CnCNet in %d seconds...", i);

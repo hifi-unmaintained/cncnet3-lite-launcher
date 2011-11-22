@@ -27,6 +27,7 @@ char cfg_opip[512] = "";
 int cfg_opport = 8054;
 char cfg_exe[64] = { 0 };
 char cfg_args[512] = "-LAN";
+int cfg_timeout = 3;
 
 extern char *game;
 
@@ -59,6 +60,12 @@ void config_load()
     GetPrivateProfileString(SECTION, "OpponentHost", cfg_opip, cfg_opip, sizeof(cfg_opip), CONFIG);
     cfg_opport = GetPrivateProfileInt(SECTION, "OpponentPort", cfg_opport, CONFIG);
     GetPrivateProfileString(SECTION, "Arguments", cfg_args, cfg_args, sizeof(cfg_args), CONFIG);
+    cfg_timeout = GetPrivateProfileInt(SECTION, "Timeout", cfg_timeout, CONFIG);
+
+    if (cfg_timeout < 0 || cfg_timeout > 30)
+    {
+        cfg_timeout = 0;
+    }
 
     if (stricmp(cfg_connection, "direct") == 0)
     {
@@ -131,4 +138,7 @@ void config_save()
 
     GetWindowText(itm_args, cfg_args, sizeof(cfg_args));
     WritePrivateProfileString(SECTION, "Arguments", cfg_args, CONFIG);
+
+    sprintf(buf, "%d", cfg_timeout);
+    WritePrivateProfileString(SECTION, "Timeout", buf, CONFIG);
 }
