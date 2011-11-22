@@ -385,8 +385,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         stream.avail_in = src_len;
         stream.next_out = dst;
         stream.avail_out = dst_len;
-        stream.zalloc = (alloc_func)malloc;
-        stream.zfree = (free_func)free;
         inflateInit2(&stream, 16+MAX_WBITS);
         ret = inflate(&stream, 1);
         inflateEnd(&stream);
