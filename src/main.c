@@ -250,8 +250,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     MSG msg;
     HRSRC hResInfo;
 
-    config_load();
-
     hwnd_status = CreateDialog(NULL, MAKEINTRESOURCE(IDD_CONNECTING), NULL, DialogProc);
     hwnd_settings = CreateDialog(NULL, MAKEINTRESOURCE(IDD_SETTINGS), NULL, DialogProc);
     itm_settings = GetDlgItem(hwnd_status, IDC_SETTINGS);
@@ -326,6 +324,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         game = "ra2";
     }
 
+    config_load();
+
     if (game == NULL)
     {
         if (strlen(cfg_exe) == 0)
@@ -336,6 +336,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
         /* generic game type */
         game = "cncnet";
+        exe = cfg_exe;
     }
 
     strcpy(cfg_exe, exe);
