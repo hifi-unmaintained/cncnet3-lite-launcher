@@ -22,6 +22,7 @@
 #include "base32.h"
 #include <commctrl.h>
 #include <winsock2.h>
+#include <zlib.h>
 
 HWND hwnd_status;
 HWND hwnd_settings;
@@ -247,6 +248,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     HANDLE find;
     BOOL ret;
     MSG msg;
+    HRSRC hResInfo;
 
     config_load();
 
@@ -353,13 +355,61 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     /* makes v3 full work! */
     protocol_register(game, path);
 
-    if (FileExists("cncnet.dll"))
+    /* extract cncnet.dll */
+    if (FileExists(dll))
     {
-        if (FileExists(dll))
+        DeleteFile(dll);
+    }
+
+    if (FileExists(dll))
+    {
+        MessageBox(NULL, "Couldn't remove old dll.", "CnCNet", MB_OK|MB_ICONERROR);
+        return 1;
+    }
+
+    hResInfo = FindResource(NULL, "dll", RT_RCDATA);
+    if (hResInfo)
+    {
+        DWORD src_len = SizeofResource(NULL, hResInfo);
+        HGLOBAL hResData = LoadResource(NULL, hResInfo);
+        LPVOID src = LockResource(hResData);
+        unsigned int dst_len = 1024*1000;
+        LPVOID dst = malloc(dst_len);
+        z_stream stream;
+        FILE *fh;
+
+        memset(&stream, 0, sizeof(z_stream));
+        stream.next_in = src;
+        stream.avail_in = src_len;
+        stream.next_out = dst;
+        stream.avail_out = dst_len;
+        stream.zalloc = (alloc_func)malloc;
+        stream.zfree = (free_func)free;
+        inflateInit2(&stream, 16+MAX_WBITS);
+        ret = inflate(&stream, 1);
+        inflateEnd(&stream);
+
+        if (ret != Z_STREAM_END)
         {
-            DeleteFile(dll);
+            MessageBox(NULL, "Error decompressing dll.", "CnCNet", MB_OK|MB_ICONERROR);
+            return 1;
         }
-        MoveFile("cncnet.dll", dll);
+
+        fh = fopen(dll, "wb");
+        if (!fh)
+        {
+            MessageBox(NULL, "Error opening dll for writing.", "CnCNet", MB_OK|MB_ICONERROR);
+            return 1;
+        }
+
+        fwrite(dst, stream.total_out, 1, fh);
+
+        fclose(fh);
+    }
+    else
+    {
+        MessageBox(NULL, "No dll included.", "CnCNet", MB_OK|MB_ICONERROR);
+        return 1;
     }
 
     CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cncnet_connect, 0, 0, NULL);

@@ -87,4 +87,6 @@ small   ICON "res/cncnet-16x16.ico"
 medium  ICON "res/cncnet-32x32.ico"
 large   ICON "res/cncnet-48x48.ico"
 
+dll     RCDATA "cncnet.dll.gz"
+
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "res/cncnet.exe.manifest"
