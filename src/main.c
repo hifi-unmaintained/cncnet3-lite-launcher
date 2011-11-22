@@ -83,8 +83,6 @@ DWORD WINAPI cncnet_connect(int ctx)
     ShowWindow(hwnd_status, SW_SHOW);
     SetForegroundWindow(hwnd_status);
 
-    config_load();
-
     /* give time to open settings */
     if (WaitForSingleObject(open_settings, 0) != WAIT_OBJECT_0)
     {
@@ -249,6 +247,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     HANDLE find;
     BOOL ret;
     MSG msg;
+
+    config_load();
+
     hwnd_status = CreateDialog(NULL, MAKEINTRESOURCE(IDD_CONNECTING), NULL, DialogProc);
     hwnd_settings = CreateDialog(NULL, MAKEINTRESOURCE(IDD_SETTINGS), NULL, DialogProc);
     itm_settings = GetDlgItem(hwnd_status, IDC_SETTINGS);
@@ -325,8 +326,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     if (game == NULL)
     {
-        MessageBox(NULL, "Couldn't find any compatible game in current directory. Sorry :-(", "CnCNet", MB_OK|MB_ICONERROR);
-        return 1;
+        if (strlen(cfg_exe) == 0)
+        {
+            MessageBox(NULL, "Couldn't find any compatible game in current directory. Sorry :-(", "CnCNet", MB_OK|MB_ICONERROR);
+            return 1;
+        }
+
+        /* generic game type */
+        game = "cncnet";
     }
 
     strcpy(cfg_exe, exe);
