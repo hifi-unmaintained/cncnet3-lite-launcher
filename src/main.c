@@ -59,6 +59,7 @@ extern int cfg_opport;
 extern char cfg_exe[64];
 extern char cfg_args[512];
 extern int cfg_timeout;
+int only_settings = 0;
 
 bool cncnet_parse_response(char *response, char *url, int *interval)
 {
@@ -82,25 +83,31 @@ DWORD WINAPI cncnet_connect(int ctx)
     char url[512];
     int interval = 0;
 
-    ShowWindow(hwnd_status, SW_SHOW);
-    SetForegroundWindow(hwnd_status);
+    if (!only_settings)
+    {
+        ShowWindow(hwnd_status, SW_SHOW);
+        SetForegroundWindow(hwnd_status);
+    }
 
     /* give time to open settings */
-    if (WaitForSingleObject(open_settings, 0) != WAIT_OBJECT_0)
+    if (WaitForSingleObject(open_settings, 0) != WAIT_OBJECT_0 || only_settings)
     {
-        for (i = cfg_timeout; i > 0; i--)
+        if (!only_settings)
         {
-            char buf[128];
-            sprintf(buf, "Connecting to CnCNet in %d seconds...", i);
-            SetWindowText(itm_status, buf);
-
-            if (WaitForSingleObject(open_settings, 1000) == WAIT_OBJECT_0)
+            for (i = cfg_timeout; i > 0; i--)
             {
-                break;
-            }
-        }
+                char buf[128];
+                sprintf(buf, "Connecting to CnCNet in %d seconds...", i);
+                SetWindowText(itm_status, buf);
 
-        EnableWindow(itm_settings, FALSE);
+                if (WaitForSingleObject(open_settings, 1000) == WAIT_OBJECT_0)
+                {
+                    break;
+                }
+            }
+
+            EnableWindow(itm_settings, FALSE);
+        }
 
         if (WaitForSingleObject(open_settings, 0) == WAIT_OBJECT_0)
         {
@@ -235,7 +242,14 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         ShowWindow(hwnd, SW_HIDE);
         config_save();
-        CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cncnet_connect, 0, 0, NULL);
+        if (!only_settings)
+        {
+            CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cncnet_connect, 0, 0, NULL);
+        }
+        else
+        {
+            PostQuitMessage(0);
+        }
     }
 
     return FALSE;
@@ -410,6 +424,12 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     {
         MessageBox(NULL, "No dll included.", "CnCNet", MB_OK|MB_ICONERROR);
         return 1;
+    }
+
+    if (strstr(GetCommandLine(), "-CFG"))
+    {
+        only_settings = 1;
+        SetEvent(open_settings);
     }
 
     CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cncnet_connect, 0, 0, NULL);
