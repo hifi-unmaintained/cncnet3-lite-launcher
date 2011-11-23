@@ -426,6 +426,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
 
     strcpy(cfg_exe, exe);
+    SetWindowText(itm_exe, cfg_exe);
 
     /* populate exe selection */
     find = FindFirstFile("*.EXE", &file);
