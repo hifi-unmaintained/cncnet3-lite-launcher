@@ -1,9 +1,9 @@
+REV=$(shell sh -c 'git rev-parse --short @{0}')
 CC=i586-mingw32msvc-gcc
-CFLAGS=-pedantic -Wall -Os -s -Wall -Iinclude
+CFLAGS=-pedantic -Wall -Os -s -Wall -Iinclude -DCNCNET_VERSION=\"$(REV)\"
 WINDRES=i586-mingw32msvc-windres
 DLLTOOL=i586-mingw32msvc-dlltool
 LIBS=-Wl,--file-alignment,512 -Wl,--gc-sections -lws2_32 -lwininet -lcomctl32
-REV=$(shell sh -c 'git rev-parse --short @{0}')
 
 all: cncnet
 

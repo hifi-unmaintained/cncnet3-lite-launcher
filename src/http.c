@@ -101,3 +101,22 @@ int http_download_mem(const char *url, void *buf, size_t bufsiz)
     dl.bufsiz = bufsiz;
     return http_get(url, (HTTP_CALLBACK)http_write_mem, &dl);
 }
+
+bool http_write_file(void *buf, size_t size, size_t file_pos, size_t file_size, FILE *fh)
+{
+    return fwrite(buf, size, 1, fh) == 1;
+}
+
+int http_download_file(const char *url, const char *path)
+{
+    FILE *fh = fopen(path, "wb");
+    bool success = false;
+
+    if (fh)
+    {
+        success = http_get(url, (HTTP_CALLBACK)http_write_file, fh);
+        fclose(fh);
+    }
+
+    return success;
+}

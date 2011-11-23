@@ -28,6 +28,7 @@ int cfg_opport = 8054;
 char cfg_exe[64] = { 0 };
 char cfg_args[512] = "-LAN";
 int cfg_timeout = 3;
+char cfg_autoupdate[32] = "true";
 
 extern char *game;
 
@@ -61,6 +62,7 @@ void config_load()
     cfg_opport = GetPrivateProfileInt(SECTION, "OpponentPort", cfg_opport, CONFIG);
     GetPrivateProfileString(SECTION, "Arguments", cfg_args, cfg_args, sizeof(cfg_args), CONFIG);
     cfg_timeout = GetPrivateProfileInt(SECTION, "Timeout", cfg_timeout, CONFIG);
+    GetPrivateProfileString(SECTION, "AutoUpdate", cfg_autoupdate, cfg_autoupdate, sizeof(cfg_autoupdate), CONFIG);
 
     if (cfg_timeout < 0 || cfg_timeout > 30)
     {
@@ -141,4 +143,6 @@ void config_save()
 
     sprintf(buf, "%d", cfg_timeout);
     WritePrivateProfileString(SECTION, "Timeout", buf, CONFIG);
+
+    WritePrivateProfileString(SECTION, "AutoUpdate", cfg_autoupdate, CONFIG);
 }

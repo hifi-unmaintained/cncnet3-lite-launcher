@@ -59,6 +59,7 @@ extern int cfg_opport;
 extern char cfg_exe[64];
 extern char cfg_args[512];
 extern int cfg_timeout;
+extern char cfg_autoupdate[32];
 int only_settings = 0;
 
 bool cncnet_parse_response(char *response, char *url, int *interval)
@@ -82,6 +83,8 @@ DWORD WINAPI cncnet_connect(int ctx)
     STARTUPINFOA sInfo;
     char url[512];
     int interval = 0;
+
+    SetWindowText(itm_settings, "&Settings");
 
     if (!only_settings)
     {
@@ -163,8 +166,6 @@ DWORD WINAPI cncnet_connect(int ctx)
     }
     else if (strcmp(cfg_connection, "p2p") == 0)
     {
-        http_init();
-
         if (http_download_mem(cncnet_build_request(cfg_apiurl, "launch", game, cfg_extport), response, sizeof(response)) && cncnet_parse_response(response, url, &interval) && url != NULL && interval > 0)
         {
             SetWindowText(itm_status, "Connected! Launching game...");
@@ -198,8 +199,6 @@ DWORD WINAPI cncnet_connect(int ctx)
         {
             SetWindowText(itm_status, "Error connecting to CnCNet :-(");
         }
-
-        http_release();
     }
     else
     {
@@ -217,6 +216,76 @@ DWORD WINAPI cncnet_connect(int ctx)
             SetWindowText(itm_status, response);
         }
     }
+
+    return 0;
+}
+
+DWORD WINAPI cncnet_download(int ctx)
+{
+    HWND itm_status = GetDlgItem(hwnd_status, IDC_STATUS);
+    char buf[MAX_PATH] = { 0 };
+    char *file;
+    PROCESS_INFORMATION pInfo;
+    STARTUPINFOA sInfo;
+
+    if (http_download_mem("http://cncnet.org/files/version.txt", buf, sizeof(buf)))
+    {
+        if (strncmp(CNCNET_VERSION, buf, strlen(CNCNET_VERSION)) != 0)
+        {
+            SetWindowText(itm_status, "Downloading update...");
+            if (http_download_file("http://cncnet.org/files/cncnet.exe", "cncnet.tmp"))
+            {
+                GetModuleFileName(NULL, buf, MAX_PATH);
+                file = GetFile(buf);
+                rename(file, "cncnet.ex_");
+                rename("cncnet.tmp", file);
+                SetWindowText(itm_status, "Restarting...");
+                ZeroMemory(&sInfo, sizeof(STARTUPINFO));
+                sInfo.cb = sizeof(sInfo);
+                ZeroMemory(&pInfo, sizeof(PROCESS_INFORMATION));
+                if (CreateProcess(NULL, file, NULL, NULL, TRUE, 0, NULL, NULL, &sInfo, &pInfo) != 0)
+                {
+                    exit(0);
+                }
+                else
+                {
+                    SetWindowText(itm_status, "Error restarting :-(");
+                }
+            }
+            else
+            {
+                SetWindowText(itm_status, "Error downloading update :-(");
+            }
+        }
+        else
+        {
+            SetWindowText(itm_status, "No updates found.");
+        }
+    }
+
+    SetEvent(open_settings);
+    return 0;
+}
+
+DWORD WINAPI cncnet_update(int ctx)
+{
+    HWND itm_status = GetDlgItem(hwnd_status, IDC_STATUS);
+    HANDLE thread;
+
+    SetWindowText(itm_settings, "&Cancel");
+    SetWindowText(itm_status, "Checking for updates...");
+
+    ShowWindow(hwnd_status, SW_SHOW);
+    SetForegroundWindow(hwnd_status);
+
+    thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cncnet_download, 0, 0, NULL);
+
+    WaitForSingleObject(open_settings, INFINITE);
+
+    Sleep(1000);
+
+    ResetEvent(open_settings);
+    cncnet_connect(ctx);
 
     return 0;
 }
@@ -264,6 +333,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     BOOL ret;
     MSG msg;
     HRSRC hResInfo;
+
+    http_init();
 
     hwnd_status = CreateDialog(NULL, MAKEINTRESOURCE(IDD_CONNECTING), NULL, DialogProc);
     hwnd_settings = CreateDialog(NULL, MAKEINTRESOURCE(IDD_SETTINGS), NULL, DialogProc);
@@ -371,6 +442,18 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     /* makes v3 full work! */
     protocol_register(game, path);
 
+
+    /* remove temporary files */
+    if (FileExists("cncnet.tmp"))
+    {
+        DeleteFile("cncnet.tmp");
+    }
+
+    if (FileExists("cncnet.ex_"))
+    {
+        DeleteFile("cncnet.ex_");
+    }
+
     /* extract cncnet.dll */
     if (FileExists(dll))
     {
@@ -432,7 +515,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         SetEvent(open_settings);
     }
 
-    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cncnet_connect, 0, 0, NULL);
+    if (cfg_autoupdate[0] == 't' && !only_settings)
+    {
+        CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cncnet_update, 0, 0, NULL);
+    }
+    else
+    {
+        CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cncnet_connect, 0, 0, NULL);
+    }
 
     while ((ret = GetMessage(&msg, NULL, 0, 0)) != 0) 
     { 
@@ -446,6 +536,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             DispatchMessage(&msg); 
         } 
     } 
+
+    http_release();
 
     return 0;
 }
