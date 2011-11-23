@@ -60,6 +60,7 @@ extern char cfg_exe[64];
 extern char cfg_args[512];
 extern int cfg_timeout;
 extern char cfg_autoupdate[32];
+extern char cfg_extractdll[32];
 int only_settings = 0;
 
 bool cncnet_parse_response(char *response, char *url, int *interval)
@@ -456,58 +457,61 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
 
     /* extract cncnet.dll */
-    if (FileExists(dll))
+    if (cfg_extractdll[0] == 't')
     {
-        DeleteFile(dll);
-    }
-
-    if (FileExists(dll))
-    {
-        MessageBox(NULL, "Couldn't remove old dll.", "CnCNet", MB_OK|MB_ICONERROR);
-        return 1;
-    }
-
-    hResInfo = FindResource(NULL, "dll", RT_RCDATA);
-    if (hResInfo)
-    {
-        DWORD src_len = SizeofResource(NULL, hResInfo);
-        HGLOBAL hResData = LoadResource(NULL, hResInfo);
-        LPVOID src = LockResource(hResData);
-        unsigned int dst_len = 1024*1000;
-        LPVOID dst = malloc(dst_len);
-        z_stream stream;
-        FILE *fh;
-
-        memset(&stream, 0, sizeof(z_stream));
-        stream.next_in = src;
-        stream.avail_in = src_len;
-        stream.next_out = dst;
-        stream.avail_out = dst_len;
-        inflateInit2(&stream, 16+MAX_WBITS);
-        ret = inflate(&stream, 1);
-        inflateEnd(&stream);
-
-        if (ret != Z_STREAM_END)
+        if (FileExists(dll))
         {
-            MessageBox(NULL, "Error decompressing dll.", "CnCNet", MB_OK|MB_ICONERROR);
+            DeleteFile(dll);
+        }
+
+        if (FileExists(dll))
+        {
+            MessageBox(NULL, "Couldn't remove old dll.", "CnCNet", MB_OK|MB_ICONERROR);
             return 1;
         }
 
-        fh = fopen(dll, "wb");
-        if (!fh)
+        hResInfo = FindResource(NULL, "dll", RT_RCDATA);
+        if (hResInfo)
         {
-            MessageBox(NULL, "Error opening dll for writing.", "CnCNet", MB_OK|MB_ICONERROR);
+            DWORD src_len = SizeofResource(NULL, hResInfo);
+            HGLOBAL hResData = LoadResource(NULL, hResInfo);
+            LPVOID src = LockResource(hResData);
+            unsigned int dst_len = 1024*1000;
+            LPVOID dst = malloc(dst_len);
+            z_stream stream;
+            FILE *fh;
+
+            memset(&stream, 0, sizeof(z_stream));
+            stream.next_in = src;
+            stream.avail_in = src_len;
+            stream.next_out = dst;
+            stream.avail_out = dst_len;
+            inflateInit2(&stream, 16+MAX_WBITS);
+            ret = inflate(&stream, 1);
+            inflateEnd(&stream);
+
+            if (ret != Z_STREAM_END)
+            {
+                MessageBox(NULL, "Error decompressing dll.", "CnCNet", MB_OK|MB_ICONERROR);
+                return 1;
+            }
+
+            fh = fopen(dll, "wb");
+            if (!fh)
+            {
+                MessageBox(NULL, "Error opening dll for writing.", "CnCNet", MB_OK|MB_ICONERROR);
+                return 1;
+            }
+
+            fwrite(dst, stream.total_out, 1, fh);
+
+            fclose(fh);
+        }
+        else
+        {
+            MessageBox(NULL, "No dll included.", "CnCNet", MB_OK|MB_ICONERROR);
             return 1;
         }
-
-        fwrite(dst, stream.total_out, 1, fh);
-
-        fclose(fh);
-    }
-    else
-    {
-        MessageBox(NULL, "No dll included.", "CnCNet", MB_OK|MB_ICONERROR);
-        return 1;
     }
 
     if (strstr(GetCommandLine(), "-CFG"))
