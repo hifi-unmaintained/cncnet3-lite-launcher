@@ -130,8 +130,8 @@ void config_save()
     WritePrivateProfileString(SECTION, "ExtPort", buf, CONFIG);
     cfg_extport = atoi(buf);
 
-    GetWindowText(itm_opip, cfg_host, sizeof(cfg_host));
-    WritePrivateProfileString(SECTION, "OpponentHost", cfg_host, CONFIG);
+    GetWindowText(itm_opip, cfg_opip, sizeof(cfg_opip));
+    WritePrivateProfileString(SECTION, "OpponentHost", cfg_opip, CONFIG);
 
     GetWindowText(itm_opport, buf, sizeof(buf));
     WritePrivateProfileString(SECTION, "OpponentPort", buf, CONFIG);
