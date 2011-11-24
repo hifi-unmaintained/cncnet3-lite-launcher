@@ -15,6 +15,7 @@ cncnet.rc.o: res/cncnet.rc.in cncnet.dll.gz
 
 cncnet: cncnet.rc.o cncnet.dll.gz
 	$(CC) $(CFLAGS) -mwindows -o cncnet.exe src/main.c src/http.c src/config.c src/register.c src/base32.c lib/libz.a cncnet.rc.o $(LIBS)
+	echo $(REV) > version.txt
 
 clean:
 	rm -f cncnet.exe cncnet.rc.o
