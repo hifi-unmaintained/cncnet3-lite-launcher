@@ -505,7 +505,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             fh = fopen(dll, "wb");
             if (!fh)
             {
-                MessageBox(NULL, "Error opening dll for writing.", "CnCNet", MB_OK|MB_ICONERROR);
+                snprintf(path, sizeof(path), "Couldn't replace %s. Check your permissions!", dll);
+                MessageBox(NULL, path, "CnCNet", MB_OK|MB_ICONERROR);
                 return 1;
             }
 

@@ -19,13 +19,7 @@
 
 BOOL FileExists(const char *path)
 {
-    FILE* file;
-    if( (file = fopen(path, "r")) )
-    {
-        fclose(file);
-        return TRUE;
-    }
-    return FALSE;
+    return (GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES);
 }
 
 /* replacement for dirname() POSIX function (also keeps internal copy of the path) */
