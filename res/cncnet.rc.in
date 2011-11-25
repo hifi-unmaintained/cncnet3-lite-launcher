@@ -60,6 +60,7 @@ FONT 8, "Ms Shell Dlg"
     GROUPBOX        "Game settings", IDC_STATIC, 7, 145, 196, 43
     LTEXT           "Executable", IDC_STATIC, 18, 158, 36, 8, SS_LEFT
     LTEXT           "Command line arguments", IDC_STATIC, 82, 159, 80, 8, SS_LEFT
+    LTEXT           "CnCNet 3.2 git~__REV__", IDC_STATIC, 7, 195, 60, 16, SS_LEFT | WS_DISABLED
 }
 
 1 VERSIONINFO
