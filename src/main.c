@@ -451,12 +451,19 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     /* remove temporary files */
     if (FileExists("cncnet.tmp"))
     {
+        SetFileAttributes("cncnet.tmp", FILE_ATTRIBUTE_NORMAL);
         DeleteFile("cncnet.tmp");
+        if (FileExists("cncnet.tmp"))
+        {
+            MessageBox(NULL, "Couldn't remove old temporary file cncnet.tmp. Check your permissions!", "CnCNet", MB_OK|MB_ICONERROR);
+        }
     }
 
     if (FileExists("cncnet.ex_"))
     {
+        SetFileAttributes("cncnet.ex_", FILE_ATTRIBUTE_NORMAL);
         DeleteFile("cncnet.ex_");
+        /* removing might fail on the first run if a race condition is met, just ignore this */
     }
 
     /* extract cncnet.dll */
@@ -464,12 +471,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     {
         if (FileExists(dll))
         {
+            SetFileAttributes(dll, FILE_ATTRIBUTE_NORMAL);
             DeleteFile(dll);
         }
 
         if (FileExists(dll))
         {
-            MessageBox(NULL, "Couldn't remove old dll.", "CnCNet", MB_OK|MB_ICONERROR);
+            snprintf(path, sizeof(path), "Couldn't replace %s. Check your permissions!", dll);
+            MessageBox(NULL, path, "CnCNet", MB_OK|MB_ICONERROR);
             return 1;
         }
 
