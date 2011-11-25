@@ -70,7 +70,7 @@ FONT 8, "Ms Shell Dlg"
         BLOCK "040904B0"
         {
             VALUE "CompanyName", "Toni Spets"
-            VALUE "FileVersion", "git~__REV__"
+            VALUE "ProductVersion", "git~__REV__"
             VALUE "InternalName", "cncnet-lite-launcher"
             VALUE "LegalCopyright", "Copyright (c) 2011 Toni Spets"
             VALUE "OriginalFileName", "cncnet.exe"

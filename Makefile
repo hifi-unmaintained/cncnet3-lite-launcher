@@ -10,10 +10,8 @@ all: cncnet
 cncnet.dll.gz: ../cncnet-client/cncnet.dll
 	gzip -c ../cncnet-client/cncnet.dll > cncnet.dll.gz
 
-cncnet.rc.o: res/cncnet.rc.in cncnet.dll.gz
+cncnet: cncnet.dll.gz
 	sed 's/__REV__/$(REV)/g' res/cncnet.rc.in | $(WINDRES) -o cncnet.rc.o
-
-cncnet: cncnet.rc.o cncnet.dll.gz
 	$(CC) $(CFLAGS) -mwindows -o cncnet.exe src/main.c src/http.c src/config.c src/register.c src/base32.c lib/libz.a cncnet.rc.o $(LIBS)
 	echo $(REV) > version.txt
 
