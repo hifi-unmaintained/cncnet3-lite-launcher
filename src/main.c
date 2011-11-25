@@ -22,7 +22,7 @@
 #include "base32.h"
 #include <commctrl.h>
 #include <winsock2.h>
-#include <zlib.h>
+#include "xz/xz.h"
 
 HWND hwnd_status;
 HWND hwnd_settings;
@@ -488,25 +488,19 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             DWORD src_len = SizeofResource(NULL, hResInfo);
             HGLOBAL hResData = LoadResource(NULL, hResInfo);
             LPVOID src = LockResource(hResData);
-            unsigned int dst_len = 1024*1000;
-            LPVOID dst = malloc(dst_len);
-            z_stream stream;
+            unsigned char buf[BUFSIZ];
             FILE *fh;
+            struct xz_buf dec_buf;
+            struct xz_dec *dec = xz_dec_init(XZ_DYNALLOC, 1 << 26);
 
-            memset(&stream, 0, sizeof(z_stream));
-            stream.next_in = src;
-            stream.avail_in = src_len;
-            stream.next_out = dst;
-            stream.avail_out = dst_len;
-            inflateInit2(&stream, 16+MAX_WBITS);
-            ret = inflate(&stream, 1);
-            inflateEnd(&stream);
+            xz_crc32_init();
 
-            if (ret != Z_STREAM_END)
-            {
-                MessageBox(NULL, "Error decompressing dll.", "CnCNet", MB_OK|MB_ICONERROR);
-                return 1;
-            }
+            dec_buf.in = src;
+            dec_buf.in_pos = 0;
+            dec_buf.in_size = src_len;
+            dec_buf.out = buf;
+            dec_buf.out_pos = 0;
+            dec_buf.out_size = sizeof(buf);
 
             fh = fopen(dll, "wb");
             if (!fh)
@@ -515,7 +509,22 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 return 1;
             }
 
-            fwrite(dst, stream.total_out, 1, fh);
+            while (dec_buf.in_pos < src_len)
+            {
+                int dec_ret = xz_dec_run(dec, &dec_buf);
+
+                fwrite(dec_buf.out, dec_buf.out_pos, 1, fh);
+                dec_buf.out_pos = 0;
+
+                if (dec_ret == XZ_DATA_ERROR)
+                {
+                    MessageBox(NULL, "XZ archive is corrupted! Aborting.", "CnCNet", MB_OK|MB_ICONERROR);
+                    return 1;
+                }
+
+                if (dec_ret != XZ_OK)
+                    break;
+            }
 
             fclose(fh);
         }
