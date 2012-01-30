@@ -328,7 +328,7 @@ INT_PTR CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     char path[MAX_PATH];
-    char *dir, *exe = NULL, *dll = "wsock32.dll";
+    char *dir, *exe = NULL, *dll = "wsock32.dll", *dl_ = "wsock32.dl_";
     WIN32_FIND_DATA file;
     HANDLE find;
     BOOL ret;
@@ -379,6 +379,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         exe = "C&C95.EXE";
         game = "cnc95";
         dll = "thipx32.dll";
+        dl_ = "thipx32.dl_";
     }
     else if (FileExists("RA95.DAT"))
     {
@@ -466,20 +467,40 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         /* removing might fail on the first run if a race condition is met, just ignore this */
     }
 
+    if (FileExists("thipx32.dl_"))
+    {
+        SetFileAttributes("thipx32.dl_", FILE_ATTRIBUTE_NORMAL);
+        DeleteFile("thipx32.dl_");
+        if (FileExists("thipx32.dl_"))
+        {
+            MessageBox(NULL, "Couldn't remove old temporary file thipx32.dl_. Please remove it yourself.", "CnCNet", MB_OK|MB_ICONERROR);
+        }
+    }
+
+    if (FileExists("wsock32.dl_"))
+    {
+        SetFileAttributes("wsock32.dl_", FILE_ATTRIBUTE_NORMAL);
+        DeleteFile("wsock32.dl_");
+        if (FileExists("wsock32.dl_"))
+        {
+            MessageBox(NULL, "Couldn't remove old temporary file wsock32.dl_. Please remove it yourself.", "CnCNet", MB_OK|MB_ICONERROR);
+        }
+    }
+
     /* extract cncnet.dll */
     if (cfg_extractdll[0] == 't')
     {
         if (FileExists(dll))
         {
             SetFileAttributes(dll, FILE_ATTRIBUTE_NORMAL);
-            DeleteFile(dll);
+            rename(dll, dl_);
+            DeleteFile(dl_);
         }
 
         if (FileExists(dll))
         {
-            snprintf(path, sizeof(path), "Couldn't replace %s. Check your permissions!", dll);
+            snprintf(path, sizeof(path), "Couldn't replace %s. Please remove the file from your game directory for auto-update to work.", dll);
             MessageBox(NULL, path, "CnCNet", MB_OK|MB_ICONERROR);
-            return 1;
         }
 
         hResInfo = FindResource(NULL, "dll", RT_RCDATA);
